@@ -1,0 +1,118 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prowlarr-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prowlarr
+  template:
+    metadata:
+      labels:
+        app: prowlarr
+    spec:
+      securityContext:
+        fsGroup: 1000
+      initContainers:
+      - name: config-setup
+        image: curlimages/curl:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - >
+            until curl -o /config/init-container.sh https://raw.githubusercontent.com/mhdzumair/MediaFusion/main/deployment/k8s/init-container.sh; do
+              echo "Failed to download script file. Retrying...";
+              sleep 3;
+            done;
+            chmod +x /config/init-container.sh;
+            /config/init-container.sh
+        volumeMounts:
+          - name: config-volume
+            mountPath: /config
+        env:
+          - name: PROWLARR_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: mediafusion-secrets
+                key: PROWLARR_API_KEY
+        envFrom:
+          - configMapRef:
+              name: mediafusion-stack-env
+      containers:
+      - name: prowlarr
+        image: ghcr.io/hotio/prowlarr:latest
+        resources:
+          requests:
+            memory: "100Mi"
+            cpu: "100m"
+          limits:
+            memory: "200Mi"
+            cpu: "200m"
+        env:
+          - name: PROWLARR_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: mediafusion-secrets
+                key: PROWLARR_API_KEY
+        envFrom:
+          - configMapRef:
+              name: mediafusion-stack-env
+        ports:
+          - containerPort: 9696
+        livenessProbe:
+          exec:
+            command:
+              - sh
+              - -c
+              - 'curl -H "X-API-KEY: $PROWLARR_API_KEY" http://localhost:9696/api/v1/health'
+          initialDelaySeconds: 60
+          periodSeconds: 60
+          failureThreshold: 5
+          timeoutSeconds: 10
+        volumeMounts:
+          - name: config-volume
+            mountPath: /config
+      - name: setup-indexers
+        image: apteno/alpine-jq:latest
+        command: ["/bin/sh", "-c"]
+        args:
+          - >
+            until curl -o /config/sidecar-config.sh https://raw.githubusercontent.com/mhdzumair/MediaFusion/main/deployment/k8s/sidecar-config.sh; do
+              echo "Failed to download script file. Retrying...";
+              sleep 3;
+            done;
+            chmod +x /config/sidecar-config.sh;
+            /config/sidecar-config.sh
+        env:
+          - name: PROWLARR_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: mediafusion-secrets
+                key: PROWLARR_API_KEY
+          - name: FLARESOLVERR_HOST
+            value: "http://flaresolverr-service:8191/"
+        volumeMounts:
+          - name: config-volume
+            mountPath: /config
+      volumes:
+        - name: config-volume
+          emptyDir: {}
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: prowlarr-service
+  name: prowlarr
+spec:
+  type: LoadBalancer
+  ports:
+  - name: "prowlarr-service-http"
+    port: 80
+    targetPort: 9696
+  selector:
+    app: prowlarr
+status:
+  loadBalancer: {}

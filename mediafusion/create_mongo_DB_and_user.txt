@@ -1,0 +1,15 @@
+# Log into Mongo
+mongosh 'mongodb://<ADMIN USER>:<ADMIN PWD>@localhost:27017/' --authenticationDatabase admin
+
+# Create DB
+use mediafusion;
+
+# Create user and grant role to mediafusion db
+db.createUser(
+ {
+   user: "mediafusion",
+   pwd: "mediafusion",
+   roles: [ { role: "readWrite", db: "mediafusion" } ]
+ }
+);
+

@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: default
+  labels:
+    app: comet
+  name: comet
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: comet
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: comet
+    spec:
+      containers:
+        - name: comet
+          image: g0ldyy/comet:latest
+          imagePullPolicy: Always
+          volumeMounts:
+          - mountPath: /data
+            name: comet-data
+      volumes:
+      - name: comet-data
+        hostPath:
+          path: /data/comet/data
+          type: Directory
+status: {}

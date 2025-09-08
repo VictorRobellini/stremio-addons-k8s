@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: proxybroker-deployment
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      app: proxybroker
+  template:
+    metadata:
+      labels:
+        app: proxybroker
+    spec:
+      containers:
+      - name: proxybroker
+        image: bluet/proxybroker2:latest
+        args: ["serve", "--host", "0.0.0.0", "--port", "8888", "--types", "HTTP", "HTTPS", "--lvl", "High", "--min-queue", "5"]
+        ports:
+        - containerPort: 8888
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "100Mi"
+          limits:
+            cpu: "200m"
+            memory: "200Mi"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: proxybroker-service
+spec:
+  selector:
+    app: proxybroker
+  ports:
+    - protocol: TCP
+      port: 8888
+      targetPort: 8888

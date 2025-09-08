@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dramatiq-worker-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dramatiq-worker
+  template:
+    metadata:
+      labels:
+        app: dramatiq-worker
+    spec:
+      containers:
+      - name: dramatiq-worker
+        image: mhdzumair/mediafusion:4.3.34
+        command: ["dramatiq", "api.task", "-p", "1", "-t", "1"]
+        #command: ["env"]
+        env:
+          - name: API_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mediafusion-secrets
+                key: API_PASSWORD
+          - name: SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                name: mediafusion-secrets
+                key: SECRET_KEY
+          - name: PROWLARR_API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: mediafusion-secrets
+                key: PROWLARR_API_KEY
+        envFrom:
+          - configMapRef:
+              name: mediafusion-stack-env
+        resources:
+          requests:
+            memory: "500Mi"
+            cpu: "200m"
+          limits:
+            memory: "1Gi"
+            cpu: "200m"
+

@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mediafusion-stack-env
+data:
+  MONGO_URI: "mongodb://<mongouser>:<mongopassword>@<mongohost>:27017/mediafusion" # Used in - mediafusion dramatiq
+  HOST_URL: "https://<external URL for mediafusion>" # Used in - mediafusion dramatiq
+  POSTER_HOST_URL: "https://<external URL for mediafusion>" # Used in - mediafusion
+  ENABLE_TAMILMV_SEARCH_SCRAPER: "false"  # Used in - mediafusion
+  IS_SCRAP_FROM_TORRENTIO: "false" # Used in - mediafusion
