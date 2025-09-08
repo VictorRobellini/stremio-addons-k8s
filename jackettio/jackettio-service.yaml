@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: default
+  labels:
+    app: jackettio
+  name: jackettio
+spec:
+  type: LoadBalancer
+  ports:
+  - name: "jackettio-http"
+    port: 4000
+    targetPort: 4000
+  selector:
+    app: jackettio
+status:
+  loadBalancer: {}

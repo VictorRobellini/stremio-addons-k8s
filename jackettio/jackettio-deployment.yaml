@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: default
+  labels:
+    app: jackettio
+  name: jackettio
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jackettio
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: jackettio
+    spec:
+      containers:
+        - name: jackettio
+          image: arvida42/jackettio:latest
+          imagePullPolicy: Always
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: DATA_FOLDER
+              value: "/data"
+            - name: JACKETT_URL
+              value: "http://jackett:9117" 
+            - name: JACKETT_API_KEY
+              value: ""
+          volumeMounts:
+            - mountPath: /data
+              name: jackettio-data
+      volumes:
+      - name: jackettio-data
+        hostPath:
+          path: /data/jackettio/data
+          type: Directory
