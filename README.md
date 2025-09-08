@@ -38,6 +38,7 @@ CoreDNS is not installed by K3s because it keeps [overwriting the configmap chan
 *Looks like there's a workaround but I'm not changing my system to validate it since everything works.*
 
 ## MetalLB
+metallb-0.15.2
 
 I switched to the helm deployment. Config options and CRs change for major releases so be sure to check the [install docs](https://metallb.io/installation/) and [release notes](https://metallb.io/release-notes/).  
 
