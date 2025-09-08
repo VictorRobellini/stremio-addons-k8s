@@ -2,6 +2,8 @@
 
 Homelab setup running K3s for Kubernetes, MetalLB for L2 Loadbalancers, and more.
 
+With this setup I can access all of my Kubernetes Services by name on my local network and externally with valid SSL certs.
+
 # Homelab Setup
 [k3s](https://k3s.io/)
 
@@ -26,9 +28,6 @@ Internal K3s: .default.k8s.home.mydomain.foo
  - Added as extra search domain in pfSense DHCP
 
 pfSense Acme/LetsEncrypt manages SSL certificates and pfSense HAProxy manages inbound HTTPS termination.
-
-With this setup I can access all of my Kubernetes Services by name on my local network and externally with valid SSL certs.
-
 
 ## K3s
 My K3s Deployment. You will want to make sure the `--flannel-iface=` matches your system.
@@ -168,3 +167,5 @@ You can now validate that things are working with a simple dig query
     dig ext-dns-tcp.default.home.mydomain.foo @10.0.14.20
 
 The IP address of the service should be returned in the results.
+
+Enjoy!
