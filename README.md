@@ -8,6 +8,8 @@ Homelab setup running K3s for Kubernetes, MetalLB for L2 Loadbalancers, and more
 [MetalLB](https://metallb.io/)
 
 [pfSense](https://www.netgate.com/)
+ 
+ - Note: pfSense is not a requirement, it just makes my life easier. There are plenty of other ways to accomplish the DNS lookup and SSL termination, but pfSense is kind of awesome and it's what I have.
 
 External: .mydomain.foo
 
@@ -23,9 +25,9 @@ Internal K3s: .default.k8s.home.mydomain.foo
  - Local DNS queries sent to pfSense DNS resolver and forwarded to CoreDNS
  - Added as extra search domain in pfSense DHCP
 
-With the above stack, all deployments/services are registered with DNS and can be accessed by name within my network. pfSense Acem/LetsEncrypt manages SSL certificates and pfSense HAProxy manages inbound HTTPS termination.
+pfSense Acme/LetsEncrypt manages SSL certificates and pfSense HAProxy manages inbound HTTPS termination.
 
-With this setup I can access all of my Kubernetes Deployments/Services by name on my local network and externally with valid SSL certs.
+With this setup I can access all of my Kubernetes Services by name on my local network and externally with valid SSL certs.
 
 
 ## K3s
@@ -36,6 +38,22 @@ My K3s Deployment. You will want to make sure the `--flannel-iface=` matches you
 ```
 helm repo add coredns https://coredns.github.io/helm
 helm --namespace=kube-system install coredns coredns/coredns --set service.clusterIP="172.17.0.10"
+```
+
+Create the coredns-custom configmap to allow CoreDNS to repond to \<Service Name>.home.mydomain.foo
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: coredns-custom
+  namespace: kube-system
+data:
+  external.server: |
+    home.mydomain.foo:53 {
+      kubernetes
+      k8s_external home.mydomain.foo
+    }
 ```
 
 ## MetalLB
@@ -60,6 +78,11 @@ Add the Labels
     pod-security.kubernetes.io/warn: privileged
 ```
 I know this can all be done during ns creation or with `kubectl label namespaces` but editing is just faster for me.
+
+Feel free to choose your own range. In the yaml below I have the following setup:
+
+ - DHCP Pool: 10.0.14.100 - 10.0.14.255
+ - For me to manually assign: 10.0.14.20 - 10.0.14.99
 
 metallb-config.yaml
 ```yaml
@@ -98,3 +121,50 @@ spec:
   - default
   - reserved
 ```
+
+## Expose CoreDNS
+Create the DNS service LoadBalancer and give it an IP. In the below example, it's 10.0.14.20.
+```yaml
+metadata:
+  name: ext-dns-udp
+  namespace: kube-system
+  annotations:
+    metallb.io/allow-shared-ip: "DNS"
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 10.0.14.20
+  ports:
+  - port: 53
+    targetPort: 53
+    protocol: UDP
+  selector:
+    k8s-app: kube-dns
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ext-dns-tcp
+  namespace: kube-system
+  annotations:
+    metallb.io/allow-shared-ip: "DNS"
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 10.0.14.20
+  ports:
+  - port: 53
+    targetPort: 53
+    protocol: TCP
+  selector:
+    k8s-app: kube-dns
+```
+
+You can verify that the services are deployed with:
+
+	   kubectl -n kube-system get svc
+You should see 2 new services, ext-dns-tcp  & ext-dns-udp, you should also see that they have the same EXTERNAL-IP associated with them.
+
+You can now validate that things are working with a simple dig query
+
+    dig ext-dns-tcp.default.home.mydomain.foo @10.0.14.20
+
+The IP address of the service should be returned in the results.
