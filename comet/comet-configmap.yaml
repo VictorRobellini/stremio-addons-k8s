@@ -1,0 +1,161 @@
+#=================================================#
+#   ██████╗ ██████╗ ███╗   ███╗███████╗████████╗  #
+#  ██╔════╝██╔═══██╗████╗ ████║██╔════╝╚══██╔══╝  #
+#  ██║     ██║   ██║██╔████╔██║█████╗     ██║     #
+#  ██║     ██║   ██║██║╚██╔╝██║██╔══╝     ██║     #
+#  ╚██████╗╚██████╔╝██║ ╚═╝ ██║███████╗   ██║     #
+#   ╚═════╝ ╚═════╝ ╚═╝     ╚═╝╚══════╝   ╚═╝     #
+#          Thank you for using Comet! 🚀          #
+#=================================================#
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: comet-env
+data:
+# ============================== #
+# Stremio Addon Configuration    #
+# ============================== #
+  ADDON_ID: "stremio.comet.fast"
+  ADDON_NAME: "Comet"
+
+# ============================== #
+# FastAPI Server Configuration   #
+# ============================== #
+  FASTAPI_HOST: "0.0.0.0"
+  FASTAPI_PORT: "8000"
+  FASTAPI_WORKERS: "1" # set to -1 for auto-scaling (min((os.cpu_count() or 1) * 2 + 1, 12))
+  USE_GUNICORN: "True" # Will use uvicorn if False or if on Windows
+
+# ============================== #
+# Dashboard Settings             #
+# ============================== #
+  ADMIN_DASHBOARD_PASSWORD: "CHANGE_ME" # The password to access the dashboard
+  PUBLIC_METRICS_API: "False" # Set to True to allow public access to the metrics API (/admin/api/metrics)
+
+# ============================== #
+# Database Configuration         #
+# ============================== #
+  DATABASE_TYPE: "sqlite" # Options: sqlite, postgresql - If you have enabled auto-scaling for FASTAPI_WORKERS and are using PostgreSQL, remember to drastically increase your maximum number of connections to your DB if Comet is experiencing connection issues
+  #DATABASE_URL: "comet:comet@comet-db:port" # For PostgreSQL
+  DATABASE_PATH: "data/comet.db" # Only relevant for SQLite
+
+# ============================== #
+# Cache Settings (Seconds)       #
+# ============================== #
+  METADATA_CACHE_TTL: "2592000"  # 30 days
+  TORRENT_CACHE_TTL: "1296000"  # 15 days
+  DEBRID_CACHE_TTL: "86400"  # 1 day
+  SCRAPE_LOCK_TTL: "300"  # 5 minutes - Duration for distributed scraping locks
+  SCRAPE_WAIT_TIMEOUT: "30"  # 30 seconds - Max time to wait for other instance to complete scraping
+
+# ======================================================= #
+# Background Scraper                                      #
+# Zilean and no-ratelimit indexers/scrapers recommended!  #
+# PostgreSQL recommended for high worker count!           #
+# ======================================================= #
+  BACKGROUND_SCRAPER_ENABLED: "False"
+  BACKGROUND_SCRAPER_CONCURRENT_WORKERS: "1" # Number of concurrent workers for scraping (adjust depending on whether you are often ratelimited by scrapers)
+  BACKGROUND_SCRAPER_INTERVAL: "3600 # Interval between scraping cycles in seconds
+  BACKGROUND_SCRAPER_MAX_MOVIES_PER_RUN: "100" # Maximum number of movies to scrape per run
+  BACKGROUND_SCRAPER_MAX_SERIES_PER_RUN: "100" # Maximum number of series to scrape per run
+  
+# ============================== #
+# Debrid Proxy Configuration     #
+# ============================== #
+  DEBRID_PROXY_URL: "http://warp:1080" # Bypass Debrid Services and Torrentio IP blacklist
+
+# ============================== #
+# Indexer Manager Settings       #
+# ============================== #
+  INDEXER_MANAGER_TYPE: "none" # Options: jackett, prowlarr, none
+  INDEXER_MANAGER_URL: "http://127.0.0.1:9117"
+  INDEXER_MANAGER_API_KEY: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+  INDEXER_MANAGER_TIMEOUT: "60"  # Max time to get search results (seconds)
+  INDEXER_MANAGER_INDEXERS: '["EXAMPLE1_CHANGETHIS", "EXAMPLE2_CHANGETHIS"]' # Jackett/Prowlarr indexers
+
+# ============================== #
+# Torrent Settings               #
+# ============================== #
+  GET_TORRENT_TIMEOUT: "5" # Max time to obtain torrent info hash (seconds)
+  DOWNLOAD_TORRENT_FILES: "True" # Enable torrent file retrieval (instead of magnet link only)
+
+# ============================== #
+# Scraping Configuration         #
+# ============================== #
+# Multi-Instance Scraping Support:
+# - Single URL: Use a simple string for one instance (default behavior)
+# - Multiple URLs: Use JSON array format for multiple instances
+# - Example single: COMET_URL=https://comet.elfhosted.com
+# - Example multi: COMET_URL='["https://comet1.example.com", "https://comet2.example.com"]'
+  SCRAPE_COMET: "True"
+  COMET_URL: "https://comet.elfhosted.com"
+# Multi-instance example:
+# COMET_URL='["https://comet1.example.com", "https://comet2.example.com"]'
+
+  SCRAPE_ZILEAN: "True"
+  ZILEAN_URL: "https://zilean.elfhosted.com"
+# Multi-instance example:
+# ZILEAN_URL='["https://zilean1.example.com", "https://zilean2.example.com"]'
+
+  SCRAPE_STREMTHRU: "True"
+  STREMTHRU_SCRAPE_URL: "https://stremthru.13377001.xyz"
+# Multi-instance example:
+# STREMTHRU_SCRAPE_URL='["https://stremthru1.example.com", "https://stremthru2.example.com"]'
+
+  SCRAPE_TORRENTIO: True
+  TORRENTIO_URL: "https://torrentio.strem.fun"
+# Multi-instance example:
+# TORRENTIO_URL='["https://torrentio.strem.fun", "https://custom-torrentio.example.com"]'
+
+  SCRAPE_MEDIAFUSION: "True"
+  MEDIAFUSION_URL: "https://mediafusion.elfhosted.com"
+  MEDIAFUSION_API_PASSWORD:  # API password for MediaFusion instances that require authentication
+  MEDIAFUSION_LIVE_SEARCH: "True"
+# Multi-instance MediaFusion examples:
+# MEDIAFUSION_URL='["https://mediafusion1.example.com", "https://mediafusion2.example.com"]'
+# MEDIAFUSION_API_PASSWORD='["password1", "password2"]' # One password per URL in same order
+# MEDIAFUSION_API_PASSWORD=single_password # Same password for all instances
+# MEDIAFUSION_API_PASSWORD= # No password for any instance
+
+  SCRAPE_AIOSTREAMS: "True" # Does not work on ElfHosted instance!
+  AIOSTREAMS_URL: "https://aio.example.com"
+  AIOSTREAMS_USER_UUID_AND_PASSWORD: "user_uuid:password"
+# Multi-instance AIOStreams examples:
+# AIOSTREAMS_URL='["https://aio1.example.com", "https://aio2.example.com"]'
+# AIOSTREAMS_USER_UUID_AND_PASSWORD='["uuid1:password1", "uuid2:password2"]' # One credential per URL in same order
+# AIOSTREAMS_USER_UUID_AND_PASSWORD=single_uuid:single_password # Same credentials for all instances
+
+  SCRAPE_JACKETTIO: "True" # Works only with Telkaoss's fork
+  JACKETTIO_URL: "https://jackettio.example.com" # Full manifest URL without /manifest.json at the end
+# Multi-instance example:
+# JACKETTIO_URL='["https://jackettio1.example.com", "https://jackettio2.example.com"]'
+
+  SCRAPE_DEBRIDIO: "True"
+  DEBRIDIO_API_KEY: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+  SCRAPE_TORBOX: "True"
+  TORBOX_API_KEY: "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+
+# ============================== #
+# Debrid Stream Proxy Settings   #
+# ============================== #
+  PROXY_DEBRID_STREAM: "True"
+  PROXY_DEBRID_STREAM_PASSWORD: "CHANGE_ME"
+  PROXY_DEBRID_STREAM_MAX_CONNECTIONS: "-1" # -1 to disable connection limits
+  PROXY_DEBRID_STREAM_DEBRID_DEFAULT_SERVICE: "realdebrid"
+  PROXY_DEBRID_STREAM_DEBRID_DEFAULT_APIKEY: "CHANGE_ME"
+
+# ============================== #
+# Content Filtering              #
+# ============================== #
+  REMOVE_ADULT_CONTENT: "False"
+
+# ============================== #
+# UI Customization               #
+# ============================== #
+  CUSTOM_HEADER_HTML: "None"
+
+# ============================== #
+# StremThru Integration          #
+# ============================== #
+  STREMTHRU_URL: "https://stremthru.13377001.xyz"
