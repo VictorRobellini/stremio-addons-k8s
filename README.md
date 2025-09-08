@@ -4,7 +4,9 @@ Homelab setup running K3s for Kubernetes, MetalLB for L2 Loadbalancers, and more
 
 # Homelab Setup
 [k3s](https://k3s.io/)
+
 [MetalLB](https://metallb.io/)
+
 [pfSense](https://www.netgate.com/)
 
 External: .mydomain.foo
