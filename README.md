@@ -31,11 +31,12 @@ With this setup I can access all of my Kubernetes Deployments/Services by name o
 ## K3s
 My K3s Deployment. You will want to make sure the `--flannel-iface=` matches your system.
 
-    curl -sfL https://get.k3s.io | K3S_KUBECONFIG_MODE="644" INSTALL_K3S_EXEC="--flannel-iface=enp1s0 --cluster-cidr=172.16.0.0/16 --service-cidr=172.17.0.0/16 --cluster-dns=172.17.0.10 --disable traefik --disable servicelb --disable metrics-server --disable coredns —disable-cloud-controller" sh -
-
-CoreDNS is not installed by K3s because it keeps [overwriting the configmap changes](https://github.com/k3s-io/k3s/issues/2214) needed to get it all to work.
-
-*Looks like there's a workaround but I'm not changing my system to validate it since everything works.*
+    curl -sfL https://get.k3s.io | K3S_KUBECONFIG_MODE="644" INSTALL_K3S_EXEC="--flannel-iface=enp1s0 --cluster-cidr=172.16.0.0/16 --service-cidr=172.17.0.0/16 --cluster-dns=172.17.0.10 --disable traefik --disable servicelb --disable metrics-server —disable-cloud-controller" sh -
+## CoreDNS
+```
+helm repo add coredns https://coredns.github.io/helm
+helm --namespace=kube-system install coredns coredns/coredns --set service.clusterIP="172.17.0.10"
+```
 
 ## MetalLB
 metallb-0.15.2
