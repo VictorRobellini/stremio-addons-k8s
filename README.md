@@ -5,13 +5,13 @@ Homelab setup running K3s for Kubernetes, MetalLB for L2 Loadbalancers, and more
 With this setup I can access all of my Kubernetes Services by name on my local network and externally with valid SSL certs.
 
 # Homelab Setup
-[k3s](https://k3s.io/)
+- [k3s](https://k3s.io/)
+- [MetalLB](https://metallb.io/)
+  -  [MetalLB Github](https://github.com/metallb/metallb)
+- [pfSense](https://www.netgate.com/)
 
-[MetalLB](https://metallb.io/)
 
-[pfSense](https://www.netgate.com/)
- 
- - Note: pfSense is not a requirement, it just makes my life easier. There are plenty of other ways to accomplish the DNS lookup and SSL termination, but pfSense is kind of awesome and it's what I have.
+*Note: pfSense is not a requirement, it just makes my life easier. There are plenty of other ways to accomplish the DNS lookup and SSL termination, but pfSense is kind of awesome and it's what I have.*
 
 External: .mydomain.foo
 
@@ -21,7 +21,9 @@ Internal: .home.mydomain.foo
 
  - DNS Managed by pfSense
 
-Internal K3s: .default.home.mydomain.foo
+Internal K3s: .<namespace>.home.mydomain.foo
+
+e.g. .default.home.mydomain.foo
 
  - DNS Managed by CoreDNS
  - Local DNS queries sent to pfSense DNS resolver and forwarded to CoreDNS
@@ -31,8 +33,9 @@ pfSense Acme/LetsEncrypt manages SSL certificates and pfSense HAProxy manages in
 
 ## K3s
 My K3s Deployment. You will want to make sure the `--flannel-iface=` matches your system.
-
-    curl -sfL https://get.k3s.io | K3S_KUBECONFIG_MODE="644" INSTALL_K3S_EXEC="--flannel-iface=enp1s0 --cluster-cidr=172.16.0.0/16 --service-cidr=172.17.0.0/16 --cluster-dns=172.17.0.10 --disable traefik --disable servicelb --disable metrics-server —disable-cloud-controller" sh -
+```shell
+curl -sfL https://get.k3s.io | K3S_KUBECONFIG_MODE="644" INSTALL_K3S_EXEC="--flannel-iface=enp1s0 --cluster-cidr=172.16.0.0/16 --service-cidr=172.17.0.0/16 --cluster-dns=172.17.0.10 --disable traefik --disable servicelb --disable metrics-server —disable-cloud-controller" sh -
+```
 ## CoreDNS
 
 Create the coredns-custom configmap to allow CoreDNS to repond to \<Service Name>.home.mydomain.foo
@@ -56,15 +59,17 @@ metallb-0.15.2
 
 I switched to the helm deployment. Config options and CRs change for major releases so be sure to check the [install docs](https://metallb.io/installation/) and [release notes](https://metallb.io/release-notes/).  
 
-```
+```shell
 helm repo add metallb https://metallb.github.io/metallb
 kubectl create ns metallb-system
 helm install metallb metallb/metallb -n metallb-system
 ```
 
 There's something in the instructions about adding labels to the namespace, I'm not sure if I needed them, but I added them regardless.
+```shell
+kubectl edit ns metallb-system
+```
 
-    kubectl edit ns metallb-system
 Add the Labels
 ```yaml
   labels:
@@ -154,13 +159,20 @@ spec:
 ```
 
 You can verify that the services are deployed with:
-
-	   kubectl -n kube-system get svc
+```shell
+kubectl -n kube-system get svc
+```
 You should see 2 new services, ext-dns-tcp  & ext-dns-udp, you should also see that they have the same EXTERNAL-IP associated with them.
 
-You can now validate that things are working with a simple dig query
-
-    dig ext-dns-tcp.default.home.mydomain.foo @10.0.14.20
+## Testing it out
+```shell
+kubectl run nginx-pod --image=nginx --restart=Never --port=80 -n default
+kubectl expose pod nginx-pod --type=LoadBalancer --port=80 --name=nginx-service
+    
+kubectl get svc
+dig nginx-service.default.home.mydomain.foo @10.0.14.20
+curl nginx-service
+```
 
 The IP address of the service should be returned in the results.
 
