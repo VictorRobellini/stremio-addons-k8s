@@ -26,7 +26,7 @@ Internal K3s: .\<namespace\>.home.mydomain.foo
 e.g. .default.home.mydomain.foo
 
  - DNS Managed by CoreDNS
- - Local DNS queries sent to pfSense DNS resolver and forwarded to CoreDNS
+ - Local network DNS queries sent to pfSense DNS resolver and forwarded to CoreDNS for .default.home.mydomain.foo ([Host Override](https://docs.netgate.com/pfsense/en/latest/services/dns/resolver-host-overrides.html))
  - Added as extra search domain in pfSense DHCP
 
 pfSense Acme/LetsEncrypt manages SSL certificates and pfSense HAProxy manages inbound HTTPS termination.
