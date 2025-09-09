@@ -21,7 +21,7 @@ Internal: .home.mydomain.foo
 
  - DNS Managed by pfSense
 
-Internal K3s: .<namespace>.home.mydomain.foo
+Internal K3s: .\<namespace\>.home.mydomain.foo
 
 e.g. .default.home.mydomain.foo
 
@@ -38,7 +38,7 @@ curl -sfL https://get.k3s.io | K3S_KUBECONFIG_MODE="644" INSTALL_K3S_EXEC="--fla
 ```
 ## CoreDNS
 
-Create the coredns-custom configmap to allow CoreDNS to repond to \<Service Name>.home.mydomain.foo
+Create the coredns-custom configmap to allow CoreDNS to repond to \<Service Name\>.\<namespace\>.home.mydomain.foo
 
 ```yaml
 apiVersion: v1
